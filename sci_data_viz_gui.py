@@ -885,17 +885,20 @@ class DatasetManager(QWidget):
     
     def get_datasets(self):
         """Get all datasets"""
-        return self.datasets
 
 
 class TabbedControlPanel(QWidget):
     """Enhanced control panel with tabbed interface for better organization"""
-    
     plot_updated = Signal()
     plot_type_changed = Signal(str)
     
     def __init__(self):
         super().__init__()
+        # Setup debounce timer for plot updates
+        self.update_timer = QTimer(self)
+        self.update_timer.setSingleShot(True)
+        self.update_timer.setInterval(500)  # 500ms delay before updating
+        self.update_timer.timeout.connect(self.plot_updated.emit)
         self.setup_ui()
     
     def setup_ui(self):
@@ -978,28 +981,32 @@ class TabbedControlPanel(QWidget):
         titles_group = QGroupBox("Plot Labels")
         titles_layout = QGridLayout()
         
+        # Helper function to handle text changes with debouncing
+        def schedule_update():
+            self.update_timer.start()
+        
         titles_layout.addWidget(QLabel("Title:"), 0, 0)
         self.title_edit = QLineEdit()
         self.title_edit.setPlaceholderText("Plot Title")
-        #self.title_edit.textChanged.connect(lambda: self.plot_updated.emit())
+        self.title_edit.textChanged.connect(schedule_update)
         titles_layout.addWidget(self.title_edit, 0, 1)
         
         titles_layout.addWidget(QLabel("X-axis:"), 1, 0)
         self.xlabel_edit = QLineEdit()
         self.xlabel_edit.setPlaceholderText("X-axis Label")
-        #self.xlabel_edit.textChanged.connect(lambda: self.plot_updated.emit())
+        self.xlabel_edit.textChanged.connect(schedule_update)
         titles_layout.addWidget(self.xlabel_edit, 1, 1)
         
         titles_layout.addWidget(QLabel("Y-axis:"), 2, 0)
         self.ylabel_edit = QLineEdit()
         self.ylabel_edit.setPlaceholderText("Y-axis Label")
-        #self.ylabel_edit.textChanged.connect(lambda: self.plot_updated.emit())
+        self.ylabel_edit.textChanged.connect(schedule_update)
         titles_layout.addWidget(self.ylabel_edit, 2, 1)
         
         titles_layout.addWidget(QLabel("Right Y:"), 3, 0)
         self.ylabel2_edit = QLineEdit()
         self.ylabel2_edit.setPlaceholderText("Right Y-axis Label")
-        #self.ylabel2_edit.textChanged.connect(lambda: self.plot_updated.emit())
+        self.ylabel2_edit.textChanged.connect(schedule_update)
         titles_layout.addWidget(self.ylabel2_edit, 3, 1)
         
         titles_group.setLayout(titles_layout)
